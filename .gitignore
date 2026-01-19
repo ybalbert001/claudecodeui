@@ -130,3 +130,6 @@ dev-debug.log
 # Task files
 tasks.json
 tasks/ 
+_cacache/
+_update-notifier-last-checked
+bin/

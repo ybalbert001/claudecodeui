@@ -6,6 +6,7 @@ import { Folder, FolderOpen, File, FileText, FileCode, List, TableProperties, Ey
 import { cn } from '../lib/utils';
 import CodeEditor from './CodeEditor';
 import ImageViewer from './ImageViewer';
+import BinaryFileViewer from './BinaryFileViewer';
 import { api } from '../utils/api';
 
 function FileTree({ selectedProject }) {
@@ -14,6 +15,7 @@ function FileTree({ selectedProject }) {
   const [expandedDirs, setExpandedDirs] = useState(new Set());
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedBinaryFile, setSelectedBinaryFile] = useState(null);
   const [viewMode, setViewMode] = useState('detailed'); // 'simple', 'detailed', 'compact'
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFiles, setFilteredFiles] = useState([]);
@@ -158,6 +160,14 @@ function FileTree({ selectedProject }) {
                 projectPath: selectedProject.path,
                 projectName: selectedProject.name
               });
+            } else if (isBinaryFile(item.name)) {
+              // Open binary file info viewer
+              setSelectedBinaryFile({
+                name: item.name,
+                path: item.path,
+                projectPath: selectedProject.path,
+                projectName: selectedProject.name
+              });
             } else {
               // Open file in editor
               setSelectedFile({
@@ -203,6 +213,12 @@ function FileTree({ selectedProject }) {
     return imageExtensions.includes(ext);
   };
 
+  const isBinaryFile = (filename) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    const binaryExtensions = ['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx', 'pdf'];
+    return binaryExtensions.includes(ext);
+  };
+
   const getFileIcon = (filename) => {
     const ext = filename.split('.').pop()?.toLowerCase();
     
@@ -235,6 +251,13 @@ function FileTree({ selectedProject }) {
               toggleDirectory(item.path);
             } else if (isImageFile(item.name)) {
               setSelectedImage({
+                name: item.name,
+                path: item.path,
+                projectPath: selectedProject.path,
+                projectName: selectedProject.name
+              });
+            } else if (isBinaryFile(item.name)) {
+              setSelectedBinaryFile({
                 name: item.name,
                 path: item.path,
                 projectPath: selectedProject.path,
@@ -297,6 +320,13 @@ function FileTree({ selectedProject }) {
               toggleDirectory(item.path);
             } else if (isImageFile(item.name)) {
               setSelectedImage({
+                name: item.name,
+                path: item.path,
+                projectPath: selectedProject.path,
+                projectName: selectedProject.name
+              });
+            } else if (isBinaryFile(item.name)) {
+              setSelectedBinaryFile({
                 name: item.name,
                 path: item.path,
                 projectPath: selectedProject.path,
@@ -471,6 +501,14 @@ function FileTree({ selectedProject }) {
         <ImageViewer
           file={selectedImage}
           onClose={() => setSelectedImage(null)}
+        />
+      )}
+
+      {/* Binary File Viewer Modal */}
+      {selectedBinaryFile && (
+        <BinaryFileViewer
+          file={selectedBinaryFile}
+          onClose={() => setSelectedBinaryFile(null)}
         />
       )}
     </div>
