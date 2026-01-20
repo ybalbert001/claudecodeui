@@ -1,8 +1,10 @@
-import React from 'react';
-import { X, Download, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Download, FileText, Loader2 } from 'lucide-react';
+import { authenticatedFetch } from '../utils/api';
 
 function BinaryFileViewer({ file, onClose }) {
-  const downloadUrl = `/api/projects/${file.projectName}/files/content?path=${encodeURIComponent(file.path)}`;
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState(null);
 
   const getFileTypeLabel = (filename) => {
     const ext = filename.split('.').pop()?.toLowerCase();
@@ -16,6 +18,38 @@ function BinaryFileViewer({ file, onClose }) {
       pptx: 'PowerPoint Presentation',
     };
     return types[ext] || 'Binary File';
+  };
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      setError(null);
+
+      const downloadUrl = `/api/projects/${file.projectName}/files/content?path=${encodeURIComponent(file.path)}`;
+      const response = await authenticatedFetch(downloadUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+
+      // Create a temporary URL and trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      setError(err.message || 'Failed to download file');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -35,20 +69,28 @@ function BinaryFileViewer({ file, onClose }) {
           <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
             <FileText className="w-8 h-8 text-muted-foreground" />
           </div>
-          
+
           <div className="text-center">
             <p className="text-sm text-muted-foreground">{getFileTypeLabel(file.name)}</p>
             <p className="text-xs text-muted-foreground mt-1">{file.path}</p>
           </div>
 
-          <a
-            href={downloadUrl}
-            download={file.name}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
+
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-md transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Download
-          </a>
+            {downloading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {downloading ? 'Downloading...' : 'Download'}
+          </button>
         </div>
       </div>
     </div>
